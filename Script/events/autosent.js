@@ -1,27 +1,42 @@
 module.exports.config = {
- name: "autosend",
- eventType: [],
- version: "0.0.1",
- credits: "𝐂𝐘𝐁𝐄𝐑 ☢️_𖣘 -𝐁𝐎𝐓 ⚠️ 𝑻𝑬𝑨𝑴_ ☢️",
- description: "Listen events"
+  name: "autosend",
+  eventType: [],
+  version: "0.0.1",
+  credits: "عبد العزيز",
+  description: "إرسال رسالة تلقائية لجميع القروبات في وقت محدد"
 };
 
-module.exports.run = async({ event, api, Threads, Users }) => {
-const moment = require("moment-timezone");
-time = moment.tz('Asia/Dhaka').format('HH:mm:ss');
-var cantsend = [];
-    var allThread = global.data.allThreadID || [];
-    if (time == "17:22:00") {
+module.exports.run = async ({ event, api, Threads, Users, args }) => {
+  const moment = require("moment-timezone");
+
+  // توقيت الجزائر
+  const time = moment.tz('Africa/Algiers').format('HH:mm:ss');
+
+  // وقت التفعيل (مثال: 17:00:00)
+  if (time === "17:00:00") {
+    const cantsend = [];
+    const allThread = global.data.allThreadID || [];
+
     for (const idThread of allThread) {
-        if (isNaN(parseInt(idThread)) || idThread == event.threadID) ""
-        else {
-            api.sendMessage("test" + args.join(" ") , idThread, (error, info) => {
-                if (error) cantsend.push(idThread);
-            });
-        }
+      if (!isNaN(parseInt(idThread)) && idThread != event.threadID) {
+        api.sendMessage(
+          `📢 رسالة تلقائية من البوت نيرو\n💬 مرحبا بالجميع، تذكيركم تبقو محترمين وتخليو الجو مريح للجميع 🔥`,
+          idThread,
+          (error) => {
+            if (error) cantsend.push(idThread);
+          }
+        );
       }
-    for (var id of global.config.ADMINBOT) {
-          api.sendMessage(`Error when automatically sending messages to threads:\n${cantsend.join("\n")}`,id);
+    }
+
+    // إرسال تقرير للأدمنات في حالة وجود أخطاء
+    for (const adminID of global.config.ADMINBOT) {
+      if (cantsend.length > 0) {
+        api.sendMessage(
+          `⚠️ ما قدرناش نبعت الرسالة التلقائية لهاد القروبات:\n${cantsend.join("\n")}`,
+          adminID
+        );
+      }
     }
   }
-                                                                                          }
+};
