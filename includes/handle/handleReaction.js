@@ -2,43 +2,64 @@ module.exports = function ({ api, models, Users, Threads, Currencies }) {
     return function ({ event }) {
         const { handleReaction, commands } = global.client;
         const { messageID, threadID } = event;
-        if (handleReaction.length !== 0) {
-            const indexOfHandle = handleReaction.findIndex(e => e.messageID == messageID);
-            if (indexOfHandle < 0) return;
-            const indexOfMessage = handleReaction[indexOfHandle];
-            const handleNeedExec = commands.get(indexOfMessage.name);
 
-            if (!handleNeedExec) return api.sendMessage(global.getText('handleReaction', 'missingValue'), threadID, messageID);
-            try {
-                var getText2;
-                if (handleNeedExec.languages && typeof handleNeedExec.languages == 'object') 
-                	getText2 = (...value) => {
-                    const react = handleNeedExec.languages || {};
-                    if (!react.hasOwnProperty(global.config.language)) 
-                    	return api.sendMessage(global.getText('handleCommand', 'notFoundLanguage', handleNeedExec.config.name), threadID, messageID);
-                    var lang = handleNeedExec.languages[global.config.language][value[0]] || '';
-                    for (var i = value.length; i > 0x2 * -0xb7d + 0x2111 * 0x1 + -0xa17; i--) {
+        // ما كاش ريأكشنات مسجلة
+        if (handleReaction.length === 0) return;
+
+        // نلقاو الريأكشن الخاص بالرسالة
+        const indexOfHandle = handleReaction.findIndex(e => e.messageID == messageID);
+        if (indexOfHandle < 0) return;
+
+        const indexOfMessage = handleReaction[indexOfHandle];
+        const handleNeedExec = commands.get(indexOfMessage.name);
+
+        if (!handleNeedExec) {
+            return api.sendMessage(global.getText('handleReaction', 'missingValue'), threadID, messageID);
+        }
+
+        try {
+            let getText2;
+
+            if (handleNeedExec.languages && typeof handleNeedExec.languages === 'object') {
+                getText2 = (...value) => {
+                    const langPack = handleNeedExec.languages || {};
+                    const currentLang = global.config.language;
+
+                    if (!langPack.hasOwnProperty(currentLang)) {
+                        return api.sendMessage(global.getText('handleCommand', 'notFoundLanguage', handleNeedExec.config.name), threadID, messageID);
+                    }
+
+                    let lang = langPack[currentLang][value[0]] || '';
+                    for (let i = 1; i < value.length; i++) {
                         const expReg = RegExp('%' + i, 'g');
                         lang = lang.replace(expReg, value[i]);
                     }
+
                     return lang;
                 };
-                else getText2 = () => {};
-                const Obj = {};
-                Obj.api= api 
-                Obj.event = event 
-                Obj.models = models
-                Obj.Users = Users
-                Obj.Threads = Threads
-                Obj.Currencies = Currencies
-                Obj.handleReaction = indexOfMessage
-                Obj.models= models 
-                Obj.getText = getText2
-                handleNeedExec.handleReaction(Obj);
-                return;
-            } catch (error) {
-                return api.sendMessage(global.getText('handleReaction', 'executeError', error), threadID, messageID);
+            } else {
+                getText2 = () => {};
             }
+
+            const Obj = {
+                api,
+                event,
+                models,
+                Users,
+                Threads,
+                Currencies,
+                handleReaction: indexOfMessage,
+                getText: getText2
+            };
+
+            handleNeedExec.handleReaction(Obj);
+            return;
+
+        } catch (error) {
+            return api.sendMessage(global.getText('handleReaction', 'executeError', error), threadID, messageID);
         }
     };
 };
+
+// 🛠️ بوت نيرو ☠️
+// المطور: عبد العزيز
