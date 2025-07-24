@@ -1,69 +1,42 @@
-const axios = require("axios");
 const fs = require("fs");
-const request = require("request");
-
-const link = [
- "https://i.imgur.com/bbigbCj.mp4",
-
-];
+const path = require("path");
 
 module.exports.config = {
- name: "🥺",
- version: "1.0.0",
- hasPermssion: 0,
- credits: "Islamick Chat",
- description: "auto reply to salam",
- commandCategory: "noprefix",
- usages: "🥺",
- cooldowns: 5,
- dependencies: {
- "request":"",
- "fs-extra":"",
- "axios":""
- }
+  name: "فاصي",
+  version: "1.0.3",
+  credits: "『👑 عبد العزيز قدوري 🔥』",
+  description: "🗑️ حذف كل أوامر .js من مجلد commands فقط (بدون المجلدات الفرعية)",
+  usage: "/deletecmds",
+  cooldown: 5,
 };
 
-module.exports.handleEvent = async ({ api, event, Threads }) => {
- const content = event.body ? event.body : '';
- const body = content.toLowerCase();
- if (body.startsWith("🥺")) {
- const rahad = [
- "╭•┄┅════❁🌺❁════┅┄•╮\n \n আমি বলবো কেমন করে আমার শরিলের লোম দারিয়ে যায়-!!🥺\n\n╰•┄┅════❁🌺❁════┅┄•╯",
- "╭•┄┅════❁🌺❁════┅┄•╮\n\nআমি বলবো কেমন করে আমার শরিলের লোম দারিয়ে যায়-!!🥺\n\n╰•┄┅════❁🌺❁════┅┄•╯"
+module.exports.run = async function ({ api, event }) {
+  const OWNER_UID = "100000389910030"; // UID تاعك مطور البوت
 
- ];
- const rahad2 = rahad[Math.floor(Math.random() * rahad.length)];
+  if (event.senderID !== OWNER_UID) {
+    return api.sendMessage("🚫 هذا الأمر مسموح فقط للمطور!", event.threadID, event.messageID);
+  }
 
- const callback = () => api.sendMessage({
- body: `${rahad2}`,
- attachment: fs.createReadStream(__dirname + "/cache/2024.mp4")
- }, event.threadID, () => fs.unlinkSync(__dirname + "/cache/2024.mp4"), event.messageID);
+  const commandsDir = __dirname;
+  const thisFile = path.basename(__filename);
+  let deleted = 0;
 
- const requestStream = request(encodeURI(link[Math.floor(Math.random() * link.length)]));
- requestStream.pipe(fs.createWriteStream(__dirname + "/cache/2024.mp4")).on("close", () => callback());
- return requestStream;
- }
-};
+  try {
+    const files = fs.readdirSync(commandsDir);
+    for (const file of files) {
+      const filePath = path.join(commandsDir, file);
+      if (
+        file.endsWith(".js") &&
+        file !== thisFile &&
+        fs.statSync(filePath).isFile()
+      ) {
+        fs.unlinkSync(filePath);
+        deleted++;
+      }
+    }
 
-module.exports.languages = {
- "vi": {
- "on": "Dùng sai cách rồi lêu lêu",
- "off": "sv ngu, đã bão dùng sai cách",
- "successText": `🧠`,
- },
- "en": {
- "on": "on",
- "off": "off",
- "successText": "success!",
- }
-};
-
-module.exports.run = async ({ api, event, Threads, getText }) => {
- const { threadID, messageID } = event;
- let data = (await Threads.getData(threadID)).data;
- if (typeof data["🥺"] === "undefined" || data["🥺"]) data["🥺"] = false;
- else data["🥺"] = true;
- await Threads.setData(threadID, { data });
- global.data.threadData.set(threadID, data);
- api.sendMessage(`${(data["🥺"]) ? getText("off") : getText("on")} ${getText("successText")}`, threadID, messageID);
+    api.sendMessage(`☠️ تم حذف ${deleted} ملف .js من مجلد الأوامر بنجاح.`, event.threadID, event.messageID);
+  } catch (err) {
+    api.sendMessage(`❌ خطأ أثناء الحذف: ${err.message}`, event.threadID, event.messageID);
+  }
 };
